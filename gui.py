@@ -150,9 +150,6 @@ class Pawn(Piece):
         return map(board.alpha_notation, allowed_moves)
 
 
-
-
-
 START_PATTERN = '/4kn/8/8/8/8//2KNN w 0 1'
 
 
@@ -329,24 +326,24 @@ def dismiss(windows):
 
 
 class StartWindow:
-    def __init__(self, main):
-        self.main = main
+    def __init__(self, window):
+        self.auth_window = window
         self.accounts = {}
 
         style_text = ttk.Style()
         style_text.configure("my.TButton", font="Arial 9")
 
-        self.login = ttk.Entry(width=20)
-        self.password = ttk.Entry(width=20)
+        self.login = ttk.Entry(self.auth_window, width=20)
+        self.password = ttk.Entry(self.auth_window, width=20)
 
         self.login.place(x=200, y=70)
         self.password.place(x=200, y=100)
 
-        Label(text="Добро пожаловать, введите свой логин и пароль", font="Arial 10").place(x=100, y=20)
-        Label(text="Логин", font="Arial 10").place(x=150, y=70)
-        Label(text="Пароль", font="Arial 10").place(x=142, y=100)
-        main.Button(text="Авторизация", width=17, style="my.TButton", command=lambda: self.authorization()).place(x=200, y=130)
-        main.Button(text="Регистрация", width=17, style="my.TButton", command=lambda: self.registration()).place(x=200, y=160)
+        Label(self.auth_window, text="Добро пожаловать, введите свой логин и пароль", font="Arial 10").place(x=100, y=20)
+        Label(self.auth_window, text="Логин", font="Arial 10").place(x=150, y=70)
+        Label(self.auth_window, text="Пароль", font="Arial 10").place(x=142, y=100)
+        ttk.Button(self.auth_window, text="Авторизация", width=17, style="my.TButton", command=lambda: self.authorization()).place(x=200, y=130)
+        ttk.Button(self.auth_window, text="Регистрация", width=17, style="my.TButton", command=lambda: self.registration()).place(x=200, y=160)
 
     def authorization(self):
         login = self.login.get()
@@ -377,11 +374,13 @@ class StartWindow:
                     flag_password = False
 
             if flag_reg:
-                for widget in self.main.winfo_children():
+                for widget in self.auth_window.winfo_children():
                     widget.destroy()
 
-                Label(self.main, text="Вы успешно авторизовались!", font="Arial 12 bold").place(x=120, y=80)
-                ttk.Button(self.main, text="Играть", style="my.TButton", command=lambda: self.drawing()).place(x=200, y=150)
+                game = Board()
+                Label(self.auth_window, text="Вы успешно авторизовались!", font="Arial 12 bold").place(x=120, y=80)
+                ttk.Button(self.auth_window, text="Играть", style="my.TButton",
+                           command=lambda: (self.auth_window.destroy(), main(game))).place(x=200, y=150)
 
             elif not flag_password:
                 messagebox.showwarning(title="Ошибка", message="Неверный пароль")
@@ -446,7 +445,6 @@ class StartWindow:
                     messagebox.showwarning(title="Ошибка", message="Такой аккаунт уже существует")
 
 
-
 class GUI:
     pieces = {}
     selected_piece = None
@@ -466,7 +464,7 @@ class GUI:
         self.menubar = tk.Menu(parent)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label="New Game", command=self.new_game)
-        self.filemenu.add_command(label="Authorization", command=authorization_game)
+
 
         self.menubar.add_cascade(label="File", menu=self.filemenu)
         self.parent.config(menu=self.menubar)
@@ -492,7 +490,6 @@ class GUI:
         self.draw_board()
         self.draw_pieces()
         self.info_label.config(text="   White to Start the Game  ", fg='red')
-
 
     def square_clicked(self, event):
         col_size = row_size = self.dim_square
@@ -537,7 +534,7 @@ class GUI:
     def focus(self, pos):
         try:
             piece = self.chessboard[pos]
-            print('piece',piece)
+            print('piece', piece)
         except:
             piece = None
         if piece is not None and (piece.color == self.chessboard.player_turn):
@@ -554,7 +551,7 @@ class GUI:
                 y1 = ((7 - row) * self.dim_square)
                 x2 = x1 + self.dim_square
                 y2 = y1 + self.dim_square
-                if (self.focused is not None and (row, col) in self.focused):
+                if self.focused is not None and (row, col) in self.focused:
                     self.canvas.create_rectangle(x1, y1, x2, y2,
                                                  fill=self.highlightcolor,
                                                  tags="area")
@@ -589,13 +586,6 @@ class GUI:
                 y0 = ((7 - x) * self.dim_square) + int(self.dim_square / 2)
                 self.canvas.coords(piecename, x0, y0)
 
-def authorization_game():
-    auth = Tk()
-    auth.title("Авторизация")
-    auth.geometry("480x320+100+100")
-    auth.resizable(False, False)
-
-    StartWindow(auth)
 
 def main(chessboard):
     root = tk.Tk()
@@ -603,9 +593,13 @@ def main(chessboard):
     gui = GUI(root, chessboard)
     gui.draw_board()
     gui.draw_pieces()
-    root.mainloop()
 
 
-if __name__ == "__main__":
-    game = Board()
-    main(game)
+auth = Tk()
+auth.title("Авторизация")
+auth.geometry("480x320+100+100")
+auth.resizable(False, False)
+
+StartWindow(auth)
+
+auth.mainloop()
